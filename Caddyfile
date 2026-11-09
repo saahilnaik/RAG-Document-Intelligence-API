@@ -1,0 +1,28 @@
+# Single public entrypoint with automatic HTTPS (real DOMAIN) or a local cert (localhost).
+{$DOMAIN:localhost} {
+	encode zstd gzip
+
+	# API: /v1/* only. /metrics, /readyz and the unversioned routes are NOT exposed.
+	handle /v1/* {
+		request_body {
+			max_size 30MB
+		}
+		reverse_proxy api:8000 {
+			flush_interval -1   # do not buffer SSE token streams
+			transport http {
+				response_header_timeout 5m
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

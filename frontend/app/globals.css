@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light mode tokens */
+  --bg: #ffffff;
+  --surface: #f8fafb;
+  --fg: #1f2937;
+  --accent: #2563eb;
+  --success: #10b981;
+  --error: #ef4444;
+  --border: #e5e7eb;
+}
+
+.dark {
+  /* Dark mode tokens */
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f1f5f9;
+  --accent: #3b82f6;
+  --success: #34d399;
+  --error: #f87171;
+  --border: #334155;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+#__next,
+main {
+  height: 100%;
+}

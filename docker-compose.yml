@@ -1,0 +1,134 @@
+x-backend-env: &backend-env
+  GROQ_API_KEY: ${GROQ_API_KEY}
+  GROQ_CHAT_MODEL: ${GROQ_CHAT_MODEL:-llama-3.3-70b-versatile}
+  EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+  EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-cpu}
+  UPLOAD_DIR: /app/data/uploads
+  AUTH_ENABLED: ${AUTH_ENABLED:-true}
+  API_KEYS: ${API_KEYS:?set API_KEYS, e.g. {"<generated-key>":"alice"}}
+  DATABASE_URL: postgresql+psycopg://rag:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/rag
+  REDIS_URL: redis://redis:6379/0
+  CHROMA_HOST: chroma
+  CHROMA_PORT: "8000"
+
+services:
+  api:
+    build: .
+    image: rag-doc-intel:latest
+    container_name: rag-api
+    expose:
+      - "8000"  # reachable only inside the compose network, via Caddy
+    environment: *backend-env
+    volumes:
+      - rag-uploads:/app/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # Ingestion worker: same image, consumes the Redis queue. Scale with
+  # `docker compose up --scale worker=N`.
+  worker:
+    build: .
+    image: rag-doc-intel:latest
+    command: ["arq", "worker.WorkerSettings"]
+    healthcheck:
+      disable: true  # image HEALTHCHECK probes the API port, which the worker lacks
+    environment: *backend-env
+    volumes:
+      - rag-uploads:/app/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: rag
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  chroma:
+    image: chromadb/chroma:latest
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+    volumes:
+      - chroma-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Same-origin through Caddy; baked at build time. Set PUBLIC_URL to your real https URL.
+        NEXT_PUBLIC_API_URL: ${PUBLIC_URL:-https://localhost}/v1
+        NEXT_PUBLIC_API_KEY: ${NEXT_PUBLIC_API_KEY:-}
+    image: rag-frontend:latest
+    container_name: rag-frontend
+    expose:
+      - "3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  rag-uploads:
+  pg-data:
+  redis-data:
+  chroma-data:
+  caddy-data:
+  caddy-config:

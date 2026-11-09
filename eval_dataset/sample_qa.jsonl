@@ -1,0 +1,5 @@
+{"question": "What is RAG?", "ground_truth": "RAG stands for Retrieval-Augmented Generation. It combines document retrieval with language model generation to produce accurate, grounded answers."}
+{"question": "What are the key components of the RAG Document Intelligence API?", "ground_truth": "The key components are document ingestion and chunking, vector embedding and storage, semantic retrieval, and LLM answer generation with citations."}
+{"question": "What does the API do with uploaded documents?", "ground_truth": "Uploaded documents are ingested, chunked, embedded using a vector embedding model, and stored in a vector database for later retrieval."}
+{"question": "How does the API generate answers?", "ground_truth": "The API retrieves relevant document chunks using semantic search and passes them as context to a language model, which generates a cited answer."}
+{"question": "What citation format does the API use?", "ground_truth": "The API cites sources in the format [filename:page] when referencing specific content from retrieved documents."}

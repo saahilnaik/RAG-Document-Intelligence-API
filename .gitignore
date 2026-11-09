@@ -1,0 +1,58 @@
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# Claude Code (local AI assistant config and instructions)
+CLAUDE.md
+.claude/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Runtime data (uploads + Chroma vectors; persisted via Docker volume in prod)
+data/
+
+# Eval results
+eval_results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+frontend/next-env.d.ts
+frontend/.env*.local
+frontend/coverage/
