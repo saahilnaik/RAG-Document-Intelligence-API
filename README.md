@@ -71,31 +71,60 @@ POST /v1/ask or /v1/ask/stream
 
 ## Quick start (local development)
 
-Prerequisites: Python 3.11, Node.js 20+, a free [Groq API key](https://console.groq.com).
+**You need:** [Python 3.11](https://www.python.org/downloads/), [Node.js 20+](https://nodejs.org), and a free [Groq API key](https://console.groq.com) (no credit card).
+
+### 1. Get the code
 
 ```bash
 git clone https://github.com/saahilnaik9/rag-document-intelligence-api
 cd rag-document-intelligence-api
-
-# Backend
-py -3.11 -m venv venv
-venv\Scripts\pip install -r requirements.txt
-copy .env.example .env          # then set GROQ_API_KEY
-
-# Frontend
-cd frontend && npm install && cd ..
 ```
 
-Run both servers (two terminals):
+### 2. Set up the backend
 
 ```bash
-venv\Scripts\uvicorn main:app --reload      # API  → http://localhost:8000 (Swagger at /docs)
-cd frontend && npm run dev                  # UI   → http://localhost:3000
+py -3.11 -m venv venv
+venv\Scripts\python -m pip install -r requirements.txt
+copy .env.example .env
 ```
 
-For quick local use, set `AUTH_ENABLED=false` in `.env`. Otherwise set `API_KEYS` (see [Authentication](#authentication)) and put one of the keys in `frontend/.env.local` as `NEXT_PUBLIC_API_KEY`.
+Open `.env` and set:
 
-The first upload downloads the embedding model (~130 MB) and the reranker.
+```
+GROQ_API_KEY=your_key_here
+AUTH_ENABLED=false
+```
+
+`AUTH_ENABLED=false` is fine for local use. For anything shared, set `API_KEYS` instead (see [Authentication](#authentication)) and put one of the keys in `frontend/.env.local` as `NEXT_PUBLIC_API_KEY`.
+
+### 3. Set up the frontend
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+### 4. Start both servers (two terminals)
+
+```bash
+# Terminal 1 - API: http://localhost:8000 (Swagger docs at /docs)
+venv\Scripts\python -m uvicorn main:app --reload
+
+# Terminal 2 - UI: http://localhost:3000
+cd frontend
+npm run dev
+```
+
+### 5. Try it
+
+1. Open http://localhost:3000.
+2. Upload a PDF, DOCX or TXT in the sidebar (`eval_dataset/sample.pdf` works).
+3. Once it shows as ready, ask a question. The answer streams in with citations.
+
+The first upload downloads the embedding model (~130 MB) and the reranker, so it is slow once. Allow a few GB of free RAM.
+
+> **Prefer containers?** Use [Docker](#docker-full-stack) instead of steps 2-4.
 
 ## Docker (full stack)
 
@@ -274,6 +303,8 @@ All settings live in `core/config.py` and are read from `.env` (see `.env.exampl
 - **Slow first request**: the embedding and reranker models download on first use.
 - **401**: send `X-API-Key` with a key from `API_KEYS`, or set `AUTH_ENABLED=false` for local use.
 - **`docker compose` fails on startup**: `API_KEYS` and `POSTGRES_PASSWORD` must be set in `.env`.
+- **`venv` fails or points to a missing Python**: the venv is machine-specific. Delete the `venv` folder and redo step 2 with Python 3.11.
+- **"An Application Control policy has blocked this file" (Windows)**: Smart App Control or WDAC is blocking compiled packages in `venv`. Allow the project's `venv` folder, or run the stack with Docker or WSL2 instead.
 - **Port in use**: `netstat -ano | findstr :8000`, then `taskkill /PID <PID> /F`.
 
 ## Resources
