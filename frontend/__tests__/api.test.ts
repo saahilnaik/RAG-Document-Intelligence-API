@@ -28,7 +28,7 @@ describe('fetchDocuments', () => {
     })
     const result = await fetchDocuments()
     expect(result).toEqual([mockDoc])
-    expect(fetch).toHaveBeenCalledWith(`${API}/documents`)
+    expect(fetch).toHaveBeenCalledWith(`${API}/documents`, { headers: {} })
   })
 
   it('returns empty array when fetch throws', async () => {
@@ -74,7 +74,10 @@ describe('deleteDocument', () => {
   it('sends DELETE request to correct URL', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true })
     await deleteDocument('doc-1')
-    expect(fetch).toHaveBeenCalledWith(`${API}/documents/doc-1`, { method: 'DELETE' })
+    expect(fetch).toHaveBeenCalledWith(`${API}/documents/doc-1`, {
+      method: 'DELETE',
+      headers: {},
+    })
   })
 
   it('does not throw on failure (silent delete)', async () => {
