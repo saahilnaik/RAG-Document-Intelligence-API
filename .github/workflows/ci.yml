@@ -72,7 +72,7 @@ jobs:
           load: true
           tags: rag-frontend:ci
       - name: Scan API image (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: rag-doc-intel:ci
           severity: CRITICAL,HIGH
